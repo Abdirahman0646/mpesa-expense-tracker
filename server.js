@@ -1,6 +1,7 @@
 require('dotenv').config();
 
 const express = require('express');
+const crypto = require('crypto');
 const { parseReceivedMessage, parseSentMessage } = require('./src/parser');
 const pool = require('./src/db');
 
@@ -14,13 +15,25 @@ app.get('/', (req, res) => {
 app.post('/webhook', async (req, res) => {
 
 const providedSecret = req.headers['x-webhook-secret'];
+const expectedSecret = process.env.WEBHOOK_SECRET;
 
-  if (!process.env.WEBHOOK_SECRET ||
-      providedSecret !== process.env.WEBHOOK_SECRET) {
-    return res.status(401).json({
-      error: 'Unauthorized request',
-    });
-  }
+if (!expectedSecret || !providedSecret) {
+  return res.status(401).json({
+    error: 'Unauthorized request',
+  });
+}
+
+const providedBuffer = Buffer.from(providedSecret);
+const expectedBuffer = Buffer.from(expectedSecret);
+
+if (
+  providedBuffer.length !== expectedBuffer.length ||
+  !crypto.timingSafeEqual(providedBuffer, expectedBuffer)
+) {
+  return res.status(401).json({
+    error: 'Unauthorized request',
+  });
+}
 
   const { message } = req.body;
 
