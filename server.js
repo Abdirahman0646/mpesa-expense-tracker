@@ -12,6 +12,16 @@ app.get('/', (req, res) => {
 });
 
 app.post('/webhook', async (req, res) => {
+
+const providedSecret = req.headers['x-webhook-secret'];
+
+  if (!process.env.WEBHOOK_SECRET ||
+      providedSecret !== process.env.WEBHOOK_SECRET) {
+    return res.status(401).json({
+      error: 'Unauthorized request',
+    });
+  }
+
   const { message } = req.body;
 
   if (typeof message !== 'string' || !message.trim()) {
