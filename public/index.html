@@ -1,0 +1,131 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M-PESA Expense Tracker</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1>M-PESA Expense Tracker</h1>
+        <p>Track and understand your M-PESA transactions.</p>
+    </header>
+
+    <main>
+
+        <!-- Financial Overview -->
+        <section>
+            <h2>Financial Overview</h2>
+            <p>Your financial activity at a glance.</p>
+
+            <div class="summary-cards">
+                <div class="summary-card">
+                    <h3>Total Received</h3>
+                    <p id="total-received">KES 0.00</p>
+                </div>
+
+                <div class="summary-card">
+                    <h3>Total Sent</h3>
+                    <p id="total-sent">KES 0.00</p>
+                </div>
+
+                <div class="summary-card">
+                    <h3>Transactions</h3>
+                    <p id="transaction-count">0</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Recent Transactions -->
+        <section>
+            <h2>Recent Transactions</h2>
+
+            <!-- Add Category -->
+            <div class="category-form">
+                <h3>Add a New Category</h3>
+
+                <form id="category-form">
+                    <input
+                        type="text"
+                        id="category-name"
+                        placeholder="Enter category name"
+                        required
+                    >
+
+                    <button type="submit">Add Category</button>
+                </form>
+
+                <p id="category-message"></p>
+            </div>
+
+            <!-- Manage Categories -->
+            <div class="category-management">
+                <h3>Manage Categories</h3>
+                <p>View and manage your transaction categories.</p>
+
+                <div id="category-list">
+                    <!-- Categories will be displayed here using JavaScript -->
+                </div>
+            </div>
+
+            <!-- Category Confirmation and Error Popup -->
+            <div id="category-popup" class="category-popup hidden">
+                <div class="popup-card">
+
+                    <button
+                        type="button"
+                        id="close-popup"
+                        class="close-popup"
+                        aria-label="Close popup"
+                    >
+                        &times;
+                    </button>
+
+                    <h3 id="popup-title">Delete Category?</h3>
+
+                    <p id="popup-message">
+                        Are you sure you want to delete this category?
+                    </p>
+
+                    <div class="popup-actions">
+                        <button type="button" id="cancel-delete">
+                            Cancel
+                        </button>
+
+                        <button type="button" id="confirm-delete">
+                            Delete Category
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Transactions Table -->
+            <table>
+                <thead>
+                    <tr>
+                        <th>Reference</th>
+                        <th>Type</th>
+                        <th>Amount (KES)</th>
+                        <th>Sender / Recipient</th>
+                        <th>Category</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+
+                <tbody id="transactions-table">
+                    <!-- Transactions will be added here using JavaScript -->
+                </tbody>
+            </table>
+
+        </section>
+
+    </main>
+
+    <script src="app.js"></script>
+
+</body>
+</html>

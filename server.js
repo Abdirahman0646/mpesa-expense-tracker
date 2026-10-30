@@ -7,6 +7,7 @@ const pool = require('./src/db');
 
 const app = express();
 app.use(express.json());
+app.use(express.static('public'));
 
 app.get('/', (req, res) => {
   res.json({ message: 'M-PESA Expense Tracker API is running' });
@@ -145,6 +146,70 @@ app.post('/categories', async (req, res) => {
   }
 });
 
+
+app.delete('/categories/:id', async (req, res) => {
+  const categoryId = Number(req.params.id);
+
+  if (!Number.isInteger(categoryId) || categoryId <= 0) {
+    return res.status(400).json({
+      error: 'Invalid category ID',
+    });
+  }
+
+  try {
+    // Find the category first
+    const categoryResult = await pool.query(
+      'SELECT id, name FROM categories WHERE id = $1',
+      [categoryId]
+    );
+
+    if (categoryResult.rows.length === 0) {
+      return res.status(404).json({
+        error: 'Category not found',
+      });
+    }
+
+    const category = categoryResult.rows[0];
+
+    // Protect the default Uncategorized category
+    if (category.name.toLowerCase() === 'uncategorized') {
+      return res.status(403).json({
+        error: 'The Uncategorized category cannot be deleted',
+      });
+    }
+
+    // Check whether any transactions use this category
+    const transactionResult = await pool.query(
+      'SELECT 1 FROM transactions WHERE category_id = $1 LIMIT 1',
+      [categoryId]
+    );
+
+    if (transactionResult.rows.length > 0) {
+      return res.status(409).json({
+        error: 'This category cannot be deleted because it is assigned to one or more transactions. Reassign those transactions first.',
+      });
+    }
+
+    // Delete the unused category
+    await pool.query(
+      'DELETE FROM categories WHERE id = $1',
+      [categoryId]
+    );
+
+    return res.status(200).json({
+      message: 'Category deleted successfully',
+    });
+
+  } catch (error) {
+    console.error('Failed to delete category:', error.message);
+
+    return res.status(500).json({
+      error: 'Unable to delete category',
+    });
+  }
+});
+
+
 app.patch('/transactions/:reference/category', async (req, res) => {
   const { reference } = req.params;
   const { category_id } = req.body;
@@ -217,5 +282,27 @@ app.get('/transactions', async (req, res) => {
     });
   }
 });
+
+
+app.get('/summary', async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT
+                COALESCE(SUM(CASE WHEN type = 'received' THEN amount ELSE 0 END), 0) AS "totalReceived",
+                COALESCE(SUM(CASE WHEN type = 'sent' THEN amount ELSE 0 END), 0) AS "totalSent",
+                COUNT(*) AS "transactionCount"
+            FROM transactions;
+        `);
+
+        res.json(result.rows[0]);
+
+    } catch (error) {
+        console.error('Error fetching summary:', error.message);
+        res.status(500).json({
+            error: 'Could not retrieve transaction summary'
+        });
+    }
+});
+
 
 module.exports = app;
