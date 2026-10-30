@@ -1,4 +1,3 @@
-
 const transactionsTable = document.getElementById('transactions-table');
 const totalReceived = document.getElementById('total-received');
 const totalSent = document.getElementById('total-sent');
@@ -16,6 +15,9 @@ const closePopup = document.getElementById('close-popup');
 const popupTitle = document.getElementById('popup-title');
 const cancelDelete = document.getElementById('cancel-delete');
 const confirmDelete = document.getElementById('confirm-delete');
+
+const transactionType = document.getElementById('transaction-type');
+const transactionCategory = document.getElementById('transaction-category');
 
 let selectedCategory = null;
 let categories = [];
@@ -63,6 +65,17 @@ async function loadCategories() {
     }
 
     categories = await response.json();
+    // Populate the transaction category filter
+transactionCategory.innerHTML = '<option value="all">All Categories</option>';
+
+categories.forEach(category => {
+    const option = document.createElement('option');
+
+    option.value = category.id;
+    option.textContent = category.name;
+
+    transactionCategory.appendChild(option);
+});
 
     categoryList.innerHTML = '';
 
@@ -179,9 +192,27 @@ categoryForm.addEventListener('submit', async (event) => {
     }
 });
 
+
 // Load transactions and build the table
 async function loadTransactions() {
-    const response = await fetch('/transactions');
+    const selectedType = transactionType.value;
+    const selectedCategory = transactionCategory.value;
+
+    const params = new URLSearchParams();
+
+    if (selectedType !== 'all') {
+        params.append('type', selectedType);
+    }
+
+    if (selectedCategory !== 'all') {
+        params.append('category_id', selectedCategory);
+    }
+
+    const url = params.toString()
+        ? `/transactions?${params.toString()}`
+        : '/transactions';
+
+    const response = await fetch(url);
 
     if (!response.ok) {
         throw new Error('Failed to fetch transactions');
@@ -239,7 +270,7 @@ async function loadTransactions() {
             option.value = category.id;
             option.textContent = category.name;
 
-            if (category.id === transaction.category_id) {
+            if (Number(category.id) === Number(transaction.category_id)) {
                 option.selected = true;
             }
 
@@ -316,4 +347,10 @@ async function initializeDashboard() {
     }
 }
 
+transactionType.addEventListener('change', () => {
+    loadTransactions();
+});
+transactionCategory.addEventListener('change', () => {
+    loadTransactions();
+});
 initializeDashboard();

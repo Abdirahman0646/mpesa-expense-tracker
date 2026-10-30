@@ -258,22 +258,53 @@ app.patch('/transactions/:reference/category', async (req, res) => {
 
 app.get('/transactions', async (req, res) => {
   try {
-    const result = await pool.query(
-      `SELECT
-         t.reference,
-         t.type,
-         t.amount,
-         t.sender,
-         t.recipient,
-         t.transaction_date,
-         c.id AS category_id,
-         c.name AS category
-       FROM transactions t
-       JOIN categories c ON t.category_id = c.id
-       ORDER BY t.transaction_date DESC`
-    );
+    const { type, category_id } = req.query;
+
+    let query = `
+      SELECT
+        t.reference,
+        t.type,
+        t.amount,
+        t.sender,
+        t.recipient,
+        t.transaction_date,
+        c.id AS category_id,
+        c.name AS category
+      FROM transactions t
+      JOIN categories c ON t.category_id = c.id
+    `;
+
+    const conditions = [];
+    const values = [];
+
+    if (type === 'sent' || type === 'received') {
+      values.push(type);
+      conditions.push(`t.type = $${values.length}`);
+    }
+
+    if (category_id !== undefined) {
+      const categoryId = Number(category_id);
+
+      if (!Number.isInteger(categoryId) || categoryId <= 0) {
+        return res.status(400).json({
+          error: 'Invalid category ID',
+        });
+      }
+
+      values.push(categoryId);
+      conditions.push(`t.category_id = $${values.length}`);
+    }
+
+    if (conditions.length > 0) {
+      query += ` WHERE ${conditions.join(' AND ')}`;
+    }
+
+    query += ` ORDER BY t.transaction_date DESC`;
+
+    const result = await pool.query(query, values);
 
     return res.status(200).json(result.rows);
+
   } catch (error) {
     console.error('Failed to fetch transactions:', error.message);
 
