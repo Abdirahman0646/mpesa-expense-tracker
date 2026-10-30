@@ -218,9 +218,4 @@ app.get('/transactions', async (req, res) => {
   }
 });
 
-
-const PORT = 3000;
-
-app.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
-});
+module.exports = app;
